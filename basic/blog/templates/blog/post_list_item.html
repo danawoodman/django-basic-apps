@@ -1,0 +1,44 @@
+{% load i18n comments inlines markup %}
+
+{% get_comment_count for post as comment_count %}
+
+<div class="post post-{{ post.id }}" id="post-{{ post.id }}">
+
+	<p class="post-meta">
+        {% if post.categories.all %}
+    	    <span class="post-category">
+    	        {% for c in post.categories.all %}
+    	            <a href="{{ c.get_absolute_url }}" title="{% trans "View all posts in " %} {{ c }}">{{ c }}</a>{% if not forloop.last %}, {% endif %}
+    	    </span> &#8226;
+        {% endif %}
+        <span class="post-publish-date">
+            {{ post.publish|date:"M. dS, Y" }}
+        </span>
+    </p>
+    
+    <h2 class="post-title">
+        <a href="{{ post.get_absolute_url }}" title="{% trans "Permanent link to" %} {{ post.title }}">{{ post.title }}</a>
+    </h2>
+    
+    <p class="post-tease">{{ post.tease|render_inlines|safe|markdown:"codehilite" }}</p>
+    
+    <p class="post-extra">
+	    <span class="post-comment-count">
+	        <a href="{{ post.get_absolute_url }}#comments" title="{% trans "Leave a comment" %}">
+    	        {% ifequal comment_count 0 %}
+    	            {% trans "No Comments" %}
+    	        {% else %}
+    	            {% ifequal comment_count 1 %}
+    	                {% trans "1 Comment" %}
+    	            {% else %}
+    	                {{ comment_count }} {% trans "Comments" %}
+    	            {% endifequal %}
+    	        {% endifequal %}
+    	    </a>
+	    </span>
+	    <span class="post-more-link">
+	        <a href="{{ post.get_absolute_url }}#more" title="{% trans "Continue reading this post" %}">{% trans "More &#187;" %}</a>
+	    </span>
+	</p>
+
+</div>

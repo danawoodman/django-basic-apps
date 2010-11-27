@@ -4,35 +4,48 @@
 
 {% block title %}{{ object.title }}{% endblock %}
 
-{% block body_class %}{{ block.super }} post_detail{% endblock %}
+{% block body_class %}{{ block.super }} post-detail{% endblock %}
 
-{% block body_id %}post_{{ object.id }}{% endblock %}
+{% block body_id %}post-{{ object.id }}{% endblock %}
 
 {% block content %}
 
-    <h2>{{ object.title }}</h2>
+    <div class="post">
 
-    <p class="other_posts">
-
-        {% if object.get_previous_by_publish %}
-        
-            <a class="previous" href="{{ object.get_previous_post.get_absolute_url }}" title="{% trans "View previous post" %}">&laquo; {{ object.get_previous_post }}</a>
-        
+    <p class="post-meta">
+        {% if object.categories.all %}
+    	    <span class="post-category">
+    	        {% for c in object.categories.all %}
+    	            <a href="{{ c.get_absolute_url }}" title="{% trans "View all posts in " %} {{ c }}">{{ c }}</a>{% if not forloop.last %}, {% endif %}
+    	        {% endfor %}
+    	    </span> &#8226;
         {% endif %}
-        
-        {% if object.get_previous_by_publish or object.get_next_by_publish %} | {% endif %}
-        
-        {% if object.get_next_by_publish %}
-        
-            <a class="next" href="{{ object.get_next_post.get_absolute_url }}" title="{% trans "View next post" %}">{{ object.get_next_post }} &raquo;</a>
-        
-        {% endif %}
-        
+        <span class="post-publish-date">
+            {{ object.publish|date:"M. dS, Y" }}
+        </span>
     </p>
+
+    <h2 class="post-title">{{ object.title }}</h2>
+
+    {# <p class="other_posts"> #}
+    {#  #}
+    {#     {% if object.get_previous_by_publish %} #}
+    {#      #}
+    {#         <a class="previous" href="{{ object.get_previous_post.get_absolute_url }}" title="{% trans "View previous post" %}">&laquo; {{ object.get_previous_post }}</a> #}
+    {#      #}
+    {#     {% endif %} #}
+    {#      #}
+    {#     {% if object.get_previous_by_publish or object.get_next_by_publish %} | {% endif %} #}
+    {#      #}
+    {#     {% if object.get_next_by_publish %} #}
+    {#      #}
+    {#         <a class="next" href="{{ object.get_next_post.get_absolute_url }}" title="{% trans "View next post" %}">{{ object.get_next_post }} &raquo;</a> #}
+    {#      #}
+    {#     {% endif %} #}
+    {#      #}
+    {# </p> #}
     
     {% load blog comments tagging_tags inlines markup %}
-
-    <p class="date">{{ object.publish|date:"M. dS, Y" }}</p>
 
     <div class="body">
 
@@ -60,42 +73,90 @@
 
     {% get_comment_list for object as comment_list %}
     
-    {% if comment_list %}
+    <div id="comments">
     
-        <div id="comments">
-            
-            <a name="comments"></a>
-            
-            <h3 class="comments_title">{% trans "Comments" %}</h3>
-            
+        <a name="comments"></a>
+    
+        <h3 class="comments_title">{% trans "Comments" %}</h3>
+        
+        {% if comment_list %}
+        
             {% for comment in comment_list %}
-            
+        
             {% if comment.is_public %}
-            
-                <div class="comment">
-                    
-                    <h5 class="name">
-                        <a name="c{{ comment.id }}" href="{{ comment.get_absolute_url }}" title="{% trans "Permalink to" %} {% blocktrans with comment.user_name as user_name %}{{ user_name }}'s{% endblocktrans %} {% trans "comment" %}" class="count">{{ forloop.counter }}</a>
-                        {% if comment.user_url %}<a href="{{ comment.user_url }}" title="{% trans "View" %} {% blocktrans with comment.user_name as user_name %}{{ user_name }}'s{% endblocktrans %} {% trans "website" %}">{{ comment.user_name }}</a>{% else %}{{ comment.user_name }}{% endif %} {% trans "says" %}...
-                    </h5>
-                    
-                    {{ comment.comment|urlizetrunc:"60"|markdown:"safe" }}
+        
+                <div class="comment" id-"{{ forloop.counter }}">
                 
-                    <p class="date">{% trans "Posted at" %} {{ comment.submit_date|date:"P" }} {% trans "on" %} {{ comment.submit_date|date:"F j, Y" }}</p>
-               
+                    <h4 class="comment-name">
+                        {% if comment.user_url %}
+                            <a href="{{ comment.user_url }}" title="{% trans "View" %} {% blocktrans with comment.user_name as user_name %}{{ user_name }}'s{% endblocktrans %} {% trans "website" %}" rel="nofollow">{{ comment.user_name }}</a>
+                        {% else %}
+                            {{ comment.user_name }}
+                        {% endif %}
+                    </h4>
+                
+                    {{ comment.comment|striptags|urlizetrunc:"60"|markdown }}
+            
+                    <p class="comment-date">
+                        {{ comment.submit_date|date:"M. dS, Y" }} &#64; {{ comment.submit_date|date:"P" }} 
+                        <a name="c{{ comment.id }}" href="{{ comment.get_absolute_url }}" title="{% trans "Permalink to" %} {% blocktrans with comment.user_name as user_name %}{{ user_name }}'s{% endblocktrans %} {% trans "comment" %}" class="count">#</a>
+                    </p>
+           
                 </div>
-            
+        
             {% endif %}
-            
+        
             {% endfor %}
-            
-        </div>
-
-    {% endif %}
+        
+        {% else %}
+        
+            <p>{% trans "There are no comments yet. How about being the first?" %}</p>
+        
+        {% endif %}
+        
+    </div>
 
     {% if object.allow_comments %}
     
-        {% render_comment_form for object %}
+        {# {% render_comment_form for object %} #}
+        
+        {% get_comment_form for object as form %}
+        
+        <div class="comment-form">
+            
+            <form action="{% comment_form_target %}" method="post">{% csrf_token %}
+
+                {% for field in form %}
+
+                    {% if field.is_hidden %}
+
+                        <div>{{ field }}</div>
+
+                    {% else %}
+
+                        {% if field.errors %}{{ field.errors }}{% endif %}
+
+                        <p class="field-{{ field.name }}{% if field.errors %} error{% endif %}" {% ifequal field.name "honeypot" %} style="display:none;"{% endifequal %}>
+                            {{ field }} {{ field.label_tag }} {% if field.field.required %} <span class="required">({% trans "Required" %})</span>{% endif %}
+                        </p>
+
+                    {% endif %}
+
+                {% endfor %}
+                
+                <p class="note"><em>{% trans "You can use" %} <a href="http://daringfireball.net/projects/markdown/syntax" title="{% trans "View the Markdown documentation" %}" target="blank">Markdown</a> {% trans "to format your comment." %}</em></p>
+                
+                <p>
+                    
+                    <input type="submit" name="post" class="submit-post button" value="{% trans "Post" %}" />
+                    <input type="submit" name="preview" class="submit-preview button grayed" value="{% trans "Preview" %}" />
+                    <input type="hidden" name="next" value="{{ object.get_absolute_url }}" />
+                    
+                </p>
+
+            </form>
+            
+        </div>
 
     {% else %}
 
