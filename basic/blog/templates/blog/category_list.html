@@ -13,6 +13,7 @@
     <ul class="link_list">
 
         {% for category in object_list %}
+        
             <li><a href="{{ category.get_absolute_url }}" title="{% trans "View posts in this category" %}">{{ category }}</a></li>
 
         {% endfor %}

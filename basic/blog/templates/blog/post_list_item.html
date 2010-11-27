@@ -9,6 +9,7 @@
     	    <span class="post-category">
     	        {% for c in post.categories.all %}
     	            <a href="{{ c.get_absolute_url }}" title="{% trans "View all posts in " %} {{ c }}">{{ c }}</a>{% if not forloop.last %}, {% endif %}
+    	        {% endfor %}
     	    </span> &#8226;
         {% endif %}
         <span class="post-publish-date">
