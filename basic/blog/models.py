@@ -15,6 +15,7 @@ class Category(models.Model):
     """Category model."""
     title = models.CharField(_('title'), max_length=100)
     slug = models.SlugField(_('slug'), unique=True)
+    parent = models.ForeignKey('self', blank=True, null=True, related_name='child_set')
 
     class Meta:
         verbose_name = _('category')
